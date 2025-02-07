@@ -18,8 +18,30 @@ def read_sentiment_examples(infile: str) -> List[SentimentExample]:
     Returns:
         A list of SentimentExample objects parsed from the file.
     """
-    # TODO: Open the file, go line by line, separate sentence and label, tokenize the sentence and create SentimentExample object
-    examples: List[SentimentExample] = None
+    examples: List[SentimentExample] = []
+    
+    with open(infile, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()  # Eliminar espacios en blanco y saltos de línea
+            if not line:  
+                continue  # Omitir líneas vacías
+
+            extraction = line.split("\t")
+
+            if len(extraction) != 2:
+                print(f"Warning: línea mal formateada -> {line}")
+                continue  # Omitir líneas incorrectas
+
+            words = extraction[0].split(" ")
+
+            try:
+                label = int(extraction[1])  # Convertir a entero
+            except ValueError:
+                print(f"Warning: etiqueta inválida en la línea -> {line}")
+                continue
+
+            examples.append(SentimentExample(words=words, label=label))
+
     return examples
 
 
@@ -36,8 +58,15 @@ def build_vocab(examples: List[SentimentExample]) -> Dict[str, int]:
         Dict[str, int]: A dictionary representing the vocabulary, where each word is mapped to a unique index.
     """
     # TODO: Count unique words in all the examples from the training set
-    vocab: Dict[str, int] = None
-
+    vocab: Dict[str, int] = {}
+    counter=0
+    for example in examples:
+        for word in example.words:
+            if word in vocab.keys():
+                pass
+            else:
+                vocab[word] = counter
+                counter+=1
     return vocab
 
 
@@ -57,6 +86,14 @@ def bag_of_words(
         torch.Tensor: A tensor representing the bag-of-words vector.
     """
     # TODO: Converts list of words into BoW, take into account the binary vs full
-    bow: torch.Tensor = None
+    bow: torch.Tensor = torch.zeros(len(vocab.keys()))
+    if binary:
+        for word in text:
+            if word in vocab.keys():
+                bow[vocab[word]] = 1
+    else:
+        for word in text:
+            if word in vocab.keys():
+                bow[vocab[word]]+=1
 
     return bow
