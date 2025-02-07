@@ -72,14 +72,21 @@ class NaiveBayes:
             Returns:
                 Dict[int, torch.Tensor]: Conditional probabilities of each word for each class.
             """
-            class_word_counts  = {}
-            num, den = delta, delta*features[0].numel()
-            min, max = torch.min(labels).item(), torch.max(labels).item()
+            class_word_counts: Dict[int, torch.Tensor] = {}
+            total_words_for_class: Dict[int, torch.Tensor] = {}
+            for indx, label in enumerate(labels):
+                label = int(label)
+                if label not in total_words_for_class:
+                    total_words_for_class[label] = features[indx].sum()
+                else:
+                    total_words_for_class[label] += features[indx].sum()
 
-
-            for i in range(min, max +1):
-                rows = torch.nonzero(labels == i).squeeze()
-                class_word_counts[i] = (features[rows] + num)/(features[rows].sum() + den)
+            for indx, label in enumerate(labels):
+                label = int(label)
+                if label not in class_word_counts:
+                    class_word_counts[label] = (features[indx] + delta) / (self.vocab_size*delta + total_words_for_class[label])
+                else:
+                    class_word_counts[label] += features[indx] / (self.vocab_size*delta + total_words_for_class[label])
             return class_word_counts
 
 
